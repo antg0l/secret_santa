@@ -1,0 +1,6 @@
+Anton, antgol@list.ru, 
+Sauron, antgol@mail.ru, 
+Putin, antgol@mail.ru, 
+Anton2, antgol@list.ru, 
+Sauron2, antgol@mail.ru, 
+Putin2, antgol@mail.ru, 
