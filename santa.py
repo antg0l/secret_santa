@@ -5,8 +5,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 # Variables
-sender_address = 'email'
-sender_pass = 'password'
+sender_address = 'antg0@yandex.ru'
+sender_pass = 'thunder4yan'
 
 names = []
 emails = []
@@ -62,4 +62,76 @@ if(option == 1):
    for i in range(0, count):
       info = text.readline().split(', ')
       names.append(info[0])
+      #if (info[1][-1] == '\n'):
+      #   info[1] = info[1][:-1]
       emails.append(info[1])
+
+possible_santa = names.copy()
+print("possible_santa: ", possible_santa)
+
+cont = 0
+
+while(cont == 0):
+    
+    redo = False
+    
+    possible_santa = names.copy()
+    
+    for i in range(0, len(names)):
+        recip = random.randint(0, len(possible_santa) - 1)
+        x = 0
+        while(x == 0):
+            if(names[i] == possible_santa[recip]):
+                if(len(possible_santa) == 1):
+                    redo = True
+                    x = 1
+                else:
+                    recip = random.randint(0, len(possible_santa) - 1)
+            else:
+                x = 1
+        if(redo != True):
+            recipient.append(possible_santa[recip])
+            possible_santa.pop(recip)
+            cont = 1
+        else:
+            cont = 0      
+
+# this code must run for each name
+for i in range(0, count):
+    
+    # the message which will be sent in the email
+    mail_content = f'''Hello {names[i]},
+    
+You are the secret santa of {recipient[i]}!
+    
+Remember the budget is ${budget}
+    '''
+    
+    # sets the email address the email will be sent to
+    receiver_address = emails[i]
+    
+    # sets up the MIME
+    message = MIMEMultipart()
+    message['From'] = sender_address # your email address
+    message['To'] = receiver_address # Secret Santa's email address
+    message['Subject'] = 'Secret Santa' # subject of the 
+    
+    # sets the body of the mail
+    message.attach(MIMEText(mail_content, 'plain'))
+    
+    # creates the SMTP session for sending the mail
+    session = smtplib.SMTP_SSL('smtp.yandex.ru', 465)
+    session.connect("smtp.yandex.ru", 465)
+    session.ehlo()
+    #session.starttls()
+    session.login(sender_address, sender_pass)
+    text = message.as_string()
+    session.sendmail(sender_address, receiver_address, text)
+    session.quit()
+    
+allocations = open("SantaAllocations.txt", "w+")
+
+for i in range(0, len(names)):
+    allocations.write(f'{names[i]} is the secret santa of {recipient[i]}\n')
+    
+allocations.close()             
