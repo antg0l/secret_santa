@@ -4,44 +4,31 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+class people:
+   def __init__(self, name, family):
+      self.name = name
+      self.family = family
+
 # Variables
 sender_address = 'antg0@yandex.ru'
 sender_pass = 'thunder4yan'
 
 names = []
 emails = []
+family_flags = []
 recipient = []
+names_with_flags = []
+possible_santa_i = []
 budget = 50
-
 count = 0
-
-# asks the for data entry method
-print("""Welcome to the secret santa decision-maker! How would you like to enter the information?
-   1. give a text (.txt) file with format of: name, email address
-   2. manually enter information""")
-   
-x = 0
-while(x == 0):
-   try:
-      option = int(input("Info entry method (1 or 2): "))
-      if(option > 2 or option < 1):
-         print("ERROR: You can only input 1 or 2!")
-         print("""How would you like to enter the information?
-            1. give a text (.txt) file
-            2. manually enter information""") 
-      else:
-         x = 1
-   except ValueError:
-      print("ERROR: Please input 1 or 2!")
-      print("""How would you like to enter the information?
-      1. give a text (.txt) file
-      2. manually enter information""")
+option = 1
 
 # gets the number of participants
+print("Welcome to the secret santa decision-maker!")
 x = 0
 while(x == 0):
    try:
-      count = int(input("Enter number of participants: "))
+      count = int(input("Please enter the number of participants: "))
       if(count < 2):
          print("ERROR: Number of participants must be 2 or more!")
       else:
@@ -49,10 +36,13 @@ while(x == 0):
    except ValueError:
       print("ERROR: Please input a valid integer number!")
 
-# option 1: read the file (assumes file format is correct)
+# read the file (assumes file format is correct)
 if(option == 1): 
    x = 0
    while(x == 0):
+      print("Please enter the name of the text file with the information about participants.")
+      print("Information must be formatted in the following way (each line): \"name, email, family code, \"")
+      print("A family codes can be A, B, or any other. Participants with the same family code will not be secret santas for each other.")
       filename = str(input("Name of text file (must end in .txt): "))
       if (filename[-4:] == '.txt'):
          x = 1 
@@ -62,43 +52,49 @@ if(option == 1):
    for i in range(0, count):
       info = text.readline().split(', ')
       names.append(info[0])
-      #if (info[1][-1] == '\n'):
-      #   info[1] = info[1][:-1]
       emails.append(info[1])
-
-possible_santa = names.copy()
-print("possible_santa: ", possible_santa)
+      family_flags.append(info[2])
+   for i in range(0, count):
+      names_with_flags.append(people(names[i],family_flags[i]))      
 
 cont = 0
 
+# Sorting:
 while(cont == 0):
     
     redo = False
     
-    possible_santa = names.copy()
+    possible_santa = names_with_flags.copy()
     
-    for i in range(0, len(names)):
-        recip = random.randint(0, len(possible_santa) - 1)
-        x = 0
-        while(x == 0):
-            if(names[i] == possible_santa[recip]):
-                if(len(possible_santa) == 1):
-                    redo = True
-                    x = 1
-                else:
-                    recip = random.randint(0, len(possible_santa) - 1)
-            else:
-                x = 1
-        if(redo != True):
-            recipient.append(possible_santa[recip])
-            possible_santa.pop(recip)
-            cont = 1
+    for i in range(0, len(names_with_flags)):
+        #choose possible santas from other families:
+        for j in range(0, len(possible_santa)):
+            if (names_with_flags[i].family != possible_santa[j].family):
+                possible_santa_i.append(possible_santa[j])
+            
+        if (len(possible_santa_i) == 0):
+            redo = True
+        elif (len(possible_santa_i) == 1):
+            recip = 0 
         else:
+            recip = random.randint(0, len(possible_santa_i) - 1)            
+
+        if(redo != True):
+            recipient.append(possible_santa_i[recip].name)            
+            #delete chosen name from possible santa list
+            for i in range(0, len(possible_santa)):
+                if (possible_santa_i[recip].name == possible_santa[i].name):
+                    possible_santa.pop(i)
+                    break
+            cont = 1
+            #reset possible_santa_i list:
+            possible_santa_i[:] = []
+        else:
+            print("Resorting...")
             cont = 0      
 
-# this code must run for each name
-for i in range(0, count):
-    
+# Send a message for each participant:
+for i in range(0, count):    
     # the message which will be sent in the email
     mail_content = f'''Hello {names[i]},
     
@@ -129,6 +125,7 @@ Remember the budget is ${budget}
     session.sendmail(sender_address, receiver_address, text)
     session.quit()
     
+#Also write allocations to text file
 allocations = open("SantaAllocations.txt", "w+")
 
 for i in range(0, len(names)):
